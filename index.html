@@ -17,13 +17,19 @@
       <button class="nav nav--prev" id="prev" aria-label="Previous page" title="Previous page">
         <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
+      <img id="book-back" class="book-back" src="bookback.jpg" alt="" aria-hidden="true">
       <div class="book" id="book"></div>
       <button class="nav nav--next" id="next" aria-label="Next page" title="Next page">
         <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
     </div>
-    <div class="status">
-      <span id="current">1</span><span class="sep"> / </span><span id="total">108</span>
+    <div class="pager">
+      <input type="range" id="slider" class="pager__slider" min="1" max="108" step="1" value="1" aria-label="Jump to page">
+      <div class="pager__jump">
+        <span class="pager__label">第</span>
+        <input type="number" id="jump" class="pager__input" min="1" max="108" step="1" value="1" inputmode="numeric" aria-label="Page number">
+        <span class="pager__label">页 / 共 <span id="total">108</span> 页</span>
+      </div>
     </div>
   </main>
 
