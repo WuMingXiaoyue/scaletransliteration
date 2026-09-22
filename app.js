@@ -242,5 +242,104 @@
     requestAnimationFrame(syncBookBackSize);
   });
 
+  // ---- Magnifier: a 2x circular lens that follows the cursor over the book
+  // (the canvas). It samples the rendered canvas directly, so it stays live
+  // during page-turn animations too. Hidden everywhere else.
+  var LENS_SIZE = 280; // lens diameter in CSS px
+  var LENS_ZOOM = 1.5; // magnification factor
+  var LENS_RING = 2;   // lens border thickness in CSS px
+
+  var magnifier = document.createElement('div');
+  magnifier.className = 'magnifier';
+  var lensCanvas = document.createElement('canvas');
+  magnifier.appendChild(lensCanvas);
+  document.body.appendChild(magnifier);
+
+  var lensCtx = lensCanvas.getContext('2d');
+  var lensW = Math.round(LENS_SIZE * dpr);
+  lensCanvas.width = lensW;
+  lensCanvas.height = lensW;
+  lensCanvas.style.width = LENS_SIZE + 'px';
+  lensCanvas.style.height = LENS_SIZE + 'px';
+  magnifier.style.width = LENS_SIZE + 'px';
+  magnifier.style.height = LENS_SIZE + 'px';
+
+  var lensActive = false;
+  var lensX = 0; // cursor position in CSS px relative to the canvas
+  var lensY = 0;
+  var lensViewX = 0; // cursor position in viewport px
+  var lensViewY = 0;
+  var srcRadiusCss = LENS_SIZE / (2 * LENS_ZOOM); // sampled radius around cursor
+  var lensRaf = null;
+
+  // Disable the magnifier on narrow (mobile) screens entirely.
+  var narrowMq = window.matchMedia('(max-width: 640px)');
+  narrowMq.addEventListener('change', function () {
+    if (narrowMq.matches) lensActive = false;
+  });
+
+  function drawLens() {
+    var srcSide = srcRadiusCss * 2 * dpr; // source square side, backing-store px
+    var sx = lensX * dpr - srcSide / 2;
+    var sy = lensY * dpr - srcSide / 2;
+
+    lensCtx.clearRect(0, 0, lensW, lensW);
+    lensCtx.save();
+    lensCtx.beginPath();
+    lensCtx.arc(lensW / 2, lensW / 2, lensW / 2 - LENS_RING * dpr, 0, Math.PI * 2);
+    lensCtx.clip();
+    lensCtx.drawImage(canvas, sx, sy, srcSide, srcSide, 0, 0, lensW, lensW);
+    lensCtx.restore();
+
+    // Thin ring so the lens reads as a magnifier.
+    lensCtx.beginPath();
+    lensCtx.arc(lensW / 2, lensW / 2, lensW / 2 - LENS_RING * dpr / 2, 0, Math.PI * 2);
+    lensCtx.lineWidth = LENS_RING * dpr;
+    lensCtx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+    lensCtx.stroke();
+
+    // Keep the lens on screen, centered on the cursor, clamped at the edges.
+    var half = LENS_SIZE / 2;
+    var cx = Math.min(Math.max(lensViewX, half), window.innerWidth - half);
+    var cy = Math.min(Math.max(lensViewY, half), window.innerHeight - half);
+    magnifier.style.left = Math.round(cx - half) + 'px';
+    magnifier.style.top = Math.round(cy - half) + 'px';
+  }
+
+  function lensLoop() {
+    if (!lensActive) {
+      magnifier.style.display = 'none';
+      lensRaf = null;
+      return;
+    }
+    magnifier.style.display = 'block';
+    drawLens();
+    lensRaf = requestAnimationFrame(lensLoop);
+  }
+
+  function requestLensFrame() {
+    if (lensRaf == null) lensRaf = requestAnimationFrame(lensLoop);
+  }
+
+  canvas.addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'touch' || narrowMq.matches) return;
+    var r = canvas.getBoundingClientRect();
+    var x = e.clientX - r.left;
+    var y = e.clientY - r.top;
+    if (x < 0 || y < 0 || x > r.width || y > r.height) {
+      lensActive = false;
+      return;
+    }
+    lensX = x;
+    lensY = y;
+    lensViewX = e.clientX;
+    lensViewY = e.clientY;
+    lensActive = true;
+    requestLensFrame();
+  });
+  canvas.addEventListener('pointerleave', function () {
+    lensActive = false;
+  });
+
   updateStatus();
 })();

@@ -243,4 +243,24 @@ body {
     height: 2.4rem;
     font-size: 1.1rem;
   }
+
+  .book-back {
+    display: none;
+  }
+}
+
+/* ---------- Magnifier (2x hover lens) ---------- */
+.magnifier {
+  position: fixed;
+  z-index: 1000;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: none;
+  background: #fff;
+}
+
+.magnifier canvas {
+  display: block;
 }
